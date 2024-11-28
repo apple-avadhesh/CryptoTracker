@@ -1,6 +1,6 @@
 # CryptoTracker iOS App
 
-A modern iOS application built with SwiftUI for tracking cryptocurrency market trends and prices in real-time.
+A SwiftUI iOS application built with SwiftUI for tracking cryptocurrency market trends and prices in real-time.
 
 ## Features
 
@@ -21,6 +21,7 @@ A modern iOS application built with SwiftUI for tracking cryptocurrency market t
 ## Screenshots
 
 <img src="https://github.com/user-attachments/assets/e4b75494-9596-408f-add4-698d5b18a030" width="300" alt="CryptoTracker Home Screen">
+<img src="https://github.com/user-attachments/assets/692845bb-301c-4465-940e-760575fd7b57" width="300" alt="CryptoTracker Home Screen">
 
 ## Technical Details
 
