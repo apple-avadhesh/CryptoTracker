@@ -5,6 +5,7 @@ A SwiftUI iOS application built with SwiftUI for tracking cryptocurrency market 
 ## Features
 
 - Real-time cryptocurrency price tracking
+- Search functionality for cryptocurrencies by name or symbol
 - Multiple category views:
   - All Cryptocurrencies
   - All Gainers (sorted by highest gain)
@@ -20,7 +21,7 @@ A SwiftUI iOS application built with SwiftUI for tracking cryptocurrency market 
 
 ## Screenshots
 
-<img src="https://github.com/user-attachments/assets/e4b75494-9596-408f-add4-698d5b18a030" width="300" alt="CryptoTracker Home Screen" style="margin-right: 20px"><img src="https://github.com/user-attachments/assets/692845bb-301c-4465-940e-760575fd7b57" width="300" alt="CryptoTracker Home Screen">
+<img src="https://github.com/user-attachments/assets/e4b75494-9596-408f-add4-698d5b18a030" width="300" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/692845bb-301c-4465-940e-760575fd7b57" width="300" alt="CryptoTracker Home Screen">
 
 ## Technical Details
 
@@ -83,7 +84,6 @@ The app follows the MVVM (Model-View-ViewModel) architecture:
 - Historical price charts
 - Portfolio tracking
 - Additional sorting options
-- Search functionality
 - Localization support
 
 ## Acknowledgments

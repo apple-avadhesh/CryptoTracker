@@ -13,6 +13,7 @@ enum CryptoCategory: String, CaseIterable {
 struct ContentView: View {
     @StateObject private var viewModel = CryptoViewModel()
     @State private var selectedCategory: CryptoCategory = .all
+    @State private var searchText = ""
     
     private func getTopGainers() -> [Cryptocurrency] {
         let sorted = viewModel.cryptocurrencies
@@ -61,27 +62,49 @@ struct ContentView: View {
     }
     
     var filteredCryptos: [Cryptocurrency] {
-        switch selectedCategory {
-        case .all:
-            return viewModel.cryptocurrencies
-        case .gainers:
-            return getTopGainers()
-        case .losers:
-            return getTopLosers()
-        case .new:
-            return getNewlyListed()
-        case .largeCap:
-            return filterByMarketCap(min: 10_000_000_000, max: nil)
-        case .midCap:
-            return filterByMarketCap(min: 1_000_000_000, max: 10_000_000_000)
-        case .smallCap:
-            return filterByMarketCap(min: nil, max: 1_000_000_000)
+        let categoryFiltered: [Cryptocurrency] = {
+            switch selectedCategory {
+            case .all:
+                return viewModel.cryptocurrencies
+            case .gainers:
+                return getTopGainers()
+            case .losers:
+                return getTopLosers()
+            case .new:
+                return getNewlyListed()
+            case .largeCap:
+                return filterByMarketCap(min: 10_000_000_000, max: nil)
+            case .midCap:
+                return filterByMarketCap(min: 1_000_000_000, max: 10_000_000_000)
+            case .smallCap:
+                return filterByMarketCap(min: nil, max: 1_000_000_000)
+            }
+        }()
+        
+        if searchText.isEmpty {
+            return categoryFiltered
+        }
+        
+        return categoryFiltered.filter { crypto in
+            let searchQuery = searchText.lowercased()
+            return crypto.name.lowercased().contains(searchQuery) ||
+                   crypto.symbol.lowercased().contains(searchQuery)
         }
     }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
+                // Search Bar
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+                    TextField("Search cryptocurrencies...", text: $searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(CryptoCategory.allCases, id: \.self) { category in
