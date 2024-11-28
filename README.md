@@ -20,11 +20,8 @@ A modern iOS application built with SwiftUI for tracking cryptocurrency market t
 
 ## Screenshots
 
-![Home Screen](screenshots/home.png)
+![Simulator Screenshot - iPhone 16 - 2024-11-28 at 20 57 52](https://github.com/user-attachments/assets/e4b75494-9596-408f-add4-698d5b18a030)
 *Main screen showing cryptocurrency list with real-time prices*
-
-![Categories](screenshots/categories.png)
-*Different category views for market analysis*
 
 ## Technical Details
 
