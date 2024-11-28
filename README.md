@@ -18,6 +18,14 @@ A modern iOS application built with SwiftUI for tracking cryptocurrency market t
 - Price change indicators with color coding
 - Market cap and 24h price change tracking
 
+## Screenshots
+
+![Home Screen](screenshots/home.png)
+*Main screen showing cryptocurrency list with real-time prices*
+
+![Categories](screenshots/categories.png)
+*Different category views for market analysis*
+
 ## Technical Details
 
 - Platform: iOS 16.6+
@@ -82,16 +90,8 @@ The app follows the MVVM (Model-View-ViewModel) architecture:
 - Search functionality
 - Localization support
 
-## License
-
-[Your License Here]
-
 ## Acknowledgments
 
 - CoinGecko API for cryptocurrency data
 - SwiftUI framework
 - The iOS developer community
-
-## Contact
-
-[Your Contact Information]
