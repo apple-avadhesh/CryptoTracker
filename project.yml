@@ -1,0 +1,21 @@
+name: CryptoTracker
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: 15.0
+targets:
+  CryptoTracker:
+    type: application
+    platform: iOS
+    sources:
+      - CryptoTracker
+    settings:
+      base:
+        INFOPLIST_FILE: CryptoTracker/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.cryptotracker
+    dependencies:
+      - package: Kingfisher
+packages:
+  Kingfisher:
+    url: https://github.com/onevcat/Kingfisher.git
+    from: 7.0.0
