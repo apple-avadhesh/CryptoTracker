@@ -23,9 +23,9 @@ A SwiftUI iOS application built with SwiftUI for tracking cryptocurrency market 
 - Price change indicators with color coding
 - Market cap and 24h price change tracking
 
-## Screenshots
+## Screen
 
-<img src="https://github.com/user-attachments/assets/c4048b67-ac81-4ac4-a8c8-b96e8ddc4801" width="300" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/b0d23dfb-269c-4d56-97bb-6e41a0b988b9" width="300" alt="CryptoTracker Home Screen">
+<img src="https://github.com/user-attachments/assets/163eb8fc-66d8-4284-8934-e9522fe4f3c7" width="300" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/662d278d-e29f-4da6-85b3-ffb68e6737b6" width="300" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/34847355-b1ae-494b-ab52-0e0fda1a5de0" width="300" alt="CryptoTracker Home Screen">
 
 ## Technical Details
 
