@@ -67,19 +67,6 @@ The app follows the MVVM (Model-View-ViewModel) architecture:
 - **ViewModels**: 
   - `CryptoViewModel.swift` - Handles data fetching and business logic
 
-## Error Handling
-
-- Network error handling with user-friendly messages
-- Rate limit detection and automatic cooldown
-- Loading states with proper UI feedback
-
-## Performance Considerations
-
-- Efficient API usage with rate limiting
-- Optimized list rendering
-- Minimal network requests
-- Smart data caching
-
 ## Future Improvements
 
 - Offline mode support
