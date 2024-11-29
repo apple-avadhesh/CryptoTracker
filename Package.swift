@@ -5,10 +5,23 @@ import PackageDescription
 
 let package = Package(
     name: "CryptoTracker",
+    platforms: [
+        .iOS(.v16),
+        .macOS(.v13)
+    ],
+    products: [
+        .library(
+            name: "CryptoTracker",
+            targets: ["CryptoTracker"]),
+    ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .executableTarget(
-            name: "CryptoTracker"),
+        .target(
+            name: "CryptoTracker",
+            dependencies: [],
+            path: "CryptoTracker"),
+        .testTarget(
+            name: "CryptoTrackerTests",
+            dependencies: ["CryptoTracker"],
+            path: "Tests/CryptoTrackerTests"),
     ]
 )

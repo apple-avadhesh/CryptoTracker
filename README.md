@@ -6,8 +6,12 @@ A SwiftUI iOS application built with SwiftUI for tracking cryptocurrency market 
 
 - Real-time cryptocurrency price tracking
 - Search functionality for cryptocurrencies by name or symbol
+- Favorite cryptocurrencies with persistent storage
+- Price prediction system with win/loss tracking
 - Multiple category views:
   - All Cryptocurrencies
+  - Favorites
+  - Predictions
   - All Gainers (sorted by highest gain)
   - All Losers (sorted by highest loss)
   - New Listings
@@ -79,8 +83,6 @@ The app follows the MVVM (Model-View-ViewModel) architecture:
 ## Future Improvements
 
 - Offline mode support
-- Favorite cryptocurrencies
-- Price alerts
 - Historical price charts
 - Portfolio tracking
 - Additional sorting options
