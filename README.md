@@ -25,7 +25,7 @@ A SwiftUI iOS application built with SwiftUI for tracking cryptocurrency market 
 
 ## Screen
 
-<img src="https://github.com/user-attachments/assets/163eb8fc-66d8-4284-8934-e9522fe4f3c7" width="300" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/662d278d-e29f-4da6-85b3-ffb68e6737b6" width="300" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/34847355-b1ae-494b-ab52-0e0fda1a5de0" width="300" alt="CryptoTracker Home Screen">
+<img src="https://github.com/user-attachments/assets/163eb8fc-66d8-4284-8934-e9522fe4f3c7" width="200" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/662d278d-e29f-4da6-85b3-ffb68e6737b6" width="200" alt="CryptoTracker Home Screen">&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://github.com/user-attachments/assets/34847355-b1ae-494b-ab52-0e0fda1a5de0" width="200" alt="CryptoTracker Home Screen">
 
 ## Technical Details
 
