@@ -1,82 +1,112 @@
 import Foundation
 
-struct Prediction: Identifiable, Codable {
+struct Prediction: Identifiable, Codable, Equatable {
     let id: UUID
     let cryptoId: String
     let cryptoName: String
-    let cryptoSymbol: String
+    let startPrice: Double
     let predictedPrice: Double
-    let initialPrice: Double
-    let timestamp: Date
-    let targetDate: Date
-    let type: PredictionType
+    let direction: PriceDirection
+    let timeframe: Int
+    let date: Date
     var outcome: PredictionOutcome?
     
-    enum PredictionType: String, Codable, CaseIterable {
-        case oneDay = "1 Day"
-        case oneWeek = "1 Week"
-        case oneMonth = "1 Month"
-        case threeMonths = "3 Months"
-        
-        var timeInterval: TimeInterval {
-            switch self {
-            case .oneDay:
-                return 24 * 60 * 60
-            case .oneWeek:
-                return 7 * 24 * 60 * 60
-            case .oneMonth:
-                return 30 * 24 * 60 * 60
-            case .threeMonths:
-                return 90 * 24 * 60 * 60
-            }
-        }
-    }
-    
-    enum PredictionOutcome: String, Codable {
-        case pending = "⏳"
-        case correct = "✅"
-        case incorrect = "❌"
-        case expired = "⌛️"
-    }
-    
-    init(cryptoId: String, cryptoName: String, cryptoSymbol: String, predictedPrice: Double, initialPrice: Double, type: PredictionType) {
+    init(cryptoId: String, cryptoName: String, startPrice: Double, predictedPrice: Double, direction: PriceDirection, timeframe: Int, date: Date) {
         self.id = UUID()
         self.cryptoId = cryptoId
         self.cryptoName = cryptoName
-        self.cryptoSymbol = cryptoSymbol
+        self.startPrice = startPrice
         self.predictedPrice = predictedPrice
-        self.initialPrice = initialPrice
-        self.timestamp = Date()
-        self.type = type
-        self.targetDate = Date().addingTimeInterval(type.timeInterval)
-        self.outcome = .pending
+        self.direction = direction
+        self.timeframe = timeframe
+        self.date = date
+        self.outcome = nil
     }
     
-    func evaluateOutcome(currentPrice: Double) -> PredictionOutcome {
-        let now = Date()
-        if now > targetDate {
-            return .expired
-        }
-        
-        if currentPrice >= predictedPrice {
-            return .correct
-        } else {
-            return now >= targetDate ? .incorrect : .pending
-        }
+    var endDate: Date {
+        Calendar.current.date(byAdding: .day, value: timeframe, to: date) ?? date
+    }
+    
+    var isActive: Bool {
+        endDate > Date()
     }
     
     var timeRemaining: String {
-        let now = Date()
-        if now >= targetDate {
-            return "Expired"
+        if !isActive {
+            return "Completed"
         }
         
-        let components = Calendar.current.dateComponents([.day, .hour], from: now, to: targetDate)
-        if let days = components.day, days > 0 {
-            return "\(days)d left"
-        } else if let hours = components.hour {
-            return "\(hours)h left"
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.day, .hour], from: Date(), to: endDate)
+        
+        if let days = components.day, let hours = components.hour {
+            if days > 0 {
+                return "\(days)d \(hours)h"
+            } else {
+                return "\(hours)h"
+            }
         }
-        return "< 1h left"
+        
+        return "Unknown"
     }
+    
+    var priceChangePercentage: Double {
+        ((predictedPrice - startPrice) / startPrice) * 100
+    }
+    
+    var formattedPriceChange: String {
+        String(format: "%.1f%%", abs(priceChangePercentage))
+    }
+    
+    func evaluateOutcome(currentPrice: Double) -> PredictionOutcome {
+        if isActive {
+            return .pending
+        }
+        
+        let actualChange = currentPrice - startPrice
+        let predictedChange = predictedPrice - startPrice
+        
+        if (actualChange >= 0 && predictedChange >= 0) || (actualChange < 0 && predictedChange < 0) {
+            return .correct
+        } else {
+            return .incorrect
+        }
+    }
+    
+    // MARK: - Codable
+    enum CodingKeys: String, CodingKey {
+        case id
+        case cryptoId
+        case cryptoName
+        case startPrice
+        case predictedPrice
+        case direction
+        case timeframe
+        case date
+        case outcome
+    }
+    
+    // MARK: - Equatable
+    static func == (lhs: Prediction, rhs: Prediction) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.cryptoId == rhs.cryptoId &&
+        lhs.cryptoName == rhs.cryptoName &&
+        lhs.startPrice == rhs.startPrice &&
+        lhs.predictedPrice == rhs.predictedPrice &&
+        lhs.direction == rhs.direction &&
+        lhs.timeframe == rhs.timeframe &&
+        lhs.date == rhs.date &&
+        lhs.outcome == rhs.outcome
+    }
+}
+
+enum PriceDirection: String, Codable {
+    case up
+    case down
+}
+
+enum PredictionOutcome: String, Codable {
+    case correct
+    case incorrect
+    case pending
 }

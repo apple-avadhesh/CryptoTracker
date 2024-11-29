@@ -1,77 +1,63 @@
 import SwiftUI
 
 struct PredictionView: View {
-    let cryptocurrency: Cryptocurrency
     @ObservedObject var viewModel: CryptoViewModel
-    @Environment(\.presentationMode) var presentationMode
-    
-    @State private var predictedPrice: String = ""
-    @State private var selectedTimeframe: Prediction.PredictionType = .oneWeek
-    @State private var showingError = false
-    @State private var errorMessage = ""
+    let prediction: Prediction
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Current Price")) {
-                    Text("$\(String(format: "%.2f", cryptocurrency.currentPrice))")
-                        .font(.headline)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(prediction.cryptoName)
+                    .font(.headline)
+                Spacer()
+                Text(prediction.timeRemaining)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            HStack {
+                VStack(alignment: .leading) {
+                    Text("Start Price")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(String(format: "$%.2f", prediction.startPrice))
                 }
                 
-                Section(header: Text("Timeframe")) {
-                    Picker("Timeframe", selection: $selectedTimeframe) {
-                        ForEach(Prediction.PredictionType.allCases, id: \.self) { timeframe in
-                            Text(timeframe.rawValue).tag(timeframe)
-                        }
-                    }
-                }
+                Spacer()
                 
-                Section(header: Text("Target Price")) {
-                    TextField("Enter target price", text: $predictedPrice)
-                        .keyboardType(.decimalPad)
+                VStack(alignment: .trailing) {
+                    Text("Target Price")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(String(format: "$%.2f", prediction.predictedPrice))
                 }
+            }
+            
+            HStack {
+                Text("Direction: \(prediction.direction == .up ? "Up" : "Down")")
+                    .font(.subheadline)
+                    .foregroundColor(prediction.direction == .up ? .green : .red)
                 
-                Section(footer: Text("Prediction will be evaluated after \(selectedTimeframe.rawValue)")) {
-                    Button("Make Prediction") {
-                        makePrediction()
+                Spacer()
+                
+                if let outcome = prediction.outcome {
+                    switch outcome {
+                    case .correct:
+                        Label("Correct", systemImage: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    case .incorrect:
+                        Label("Incorrect", systemImage: "xmark.circle.fill")
+                            .foregroundColor(.red)
+                    case .pending:
+                        Label("Pending", systemImage: "clock.fill")
+                            .foregroundColor(.orange)
                     }
                 }
             }
-            .navigationTitle("New Prediction")
-            .navigationBarItems(trailing: Button("Cancel") {
-                presentationMode.wrappedValue.dismiss()
-            })
-            .alert(isPresented: $showingError) {
-                Alert(title: Text("Error"),
-                      message: Text(errorMessage),
-                      dismissButton: .default(Text("OK")))
-            }
         }
-    }
-    
-    private func makePrediction() {
-        guard let predictedPriceValue = Double(predictedPrice) else {
-            errorMessage = "Please enter a valid price"
-            showingError = true
-            return
-        }
-        
-        if predictedPriceValue <= 0 {
-            errorMessage = "Predicted price must be greater than zero"
-            showingError = true
-            return
-        }
-        
-        let prediction = Prediction(
-            cryptoId: cryptocurrency.id,
-            cryptoName: cryptocurrency.name,
-            cryptoSymbol: cryptocurrency.symbol,
-            predictedPrice: predictedPriceValue,
-            initialPrice: cryptocurrency.currentPrice,
-            type: selectedTimeframe
-        )
-        
-        viewModel.addPrediction(prediction)
-        presentationMode.wrappedValue.dismiss()
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .shadow(radius: 2)
     }
 }

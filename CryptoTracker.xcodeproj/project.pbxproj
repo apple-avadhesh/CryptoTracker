@@ -16,6 +16,7 @@
 		D2BEC6202CF9ACF700EE2E7A /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BEC61E2CF9ACF700EE2E7A /* HomeView.swift */; };
 		D2BEC6232CF9B23500EE2E7A /* CryptoCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BEC6222CF9B23500EE2E7A /* CryptoCategory.swift */; };
 		D2BEC6262CF9B24A00EE2E7A /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BEC6242CF9B24A00EE2E7A /* SharedComponents.swift */; };
+		D2BEC6282CFA2A4400EE2E7A /* AddPredictionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2BEC6272CFA2A4400EE2E7A /* AddPredictionView.swift */; };
 		D4C97758D869878CE7428BDF /* Cryptocurrency.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38AACBAC3599713896BB08C0 /* Cryptocurrency.swift */; };
 		FD9C316F4F2B9A3479B99B3B /* CryptoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB995E77D916C19D3C922331 /* CryptoViewModel.swift */; };
 /* End PBXBuildFile section */
@@ -33,6 +34,7 @@
 		D2BEC61E2CF9ACF700EE2E7A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D2BEC6222CF9B23500EE2E7A /* CryptoCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoCategory.swift; sourceTree = "<group>"; };
 		D2BEC6242CF9B24A00EE2E7A /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
+		D2BEC6272CFA2A4400EE2E7A /* AddPredictionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPredictionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +109,7 @@
 				D2BEC6252CF9B24A00EE2E7A /* Components */,
 				621AEA80F995FB01E3633D5D /* CryptoRowView.swift */,
 				D2BEC61E2CF9ACF700EE2E7A /* HomeView.swift */,
+				D2BEC6272CFA2A4400EE2E7A /* AddPredictionView.swift */,
 				D2BEC6182CF9A03700EE2E7A /* PredictionsListView.swift */,
 				D2BEC6192CF9A03700EE2E7A /* PredictionView.swift */,
 			);
@@ -178,6 +181,7 @@
 				9B32D00E585F87E11A8ECDA1 /* CryptoTrackerApp.swift in Sources */,
 				D2BEC6202CF9ACF700EE2E7A /* HomeView.swift in Sources */,
 				FD9C316F4F2B9A3479B99B3B /* CryptoViewModel.swift in Sources */,
+				D2BEC6282CFA2A4400EE2E7A /* AddPredictionView.swift in Sources */,
 				D4C97758D869878CE7428BDF /* Cryptocurrency.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

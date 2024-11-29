@@ -6,36 +6,57 @@ struct PredictionsListView: View {
     var body: some View {
         List {
             if viewModel.predictions.isEmpty {
-                HStack {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "chart.bar.xaxis")
-                            .font(.system(size: 48))
-                            .foregroundColor(.blue)
-                        Text("No Predictions Yet")
-                            .font(.headline)
-                        Text("Make predictions for cryptocurrencies to see them here")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding()
-                    Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 50))
+                        .foregroundColor(.secondary)
+                    Text("No predictions yet")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                    Text("Add predictions from the Market tab")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             } else {
                 ForEach(viewModel.predictions) { prediction in
                     PredictionRowView(prediction: prediction, viewModel: viewModel)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                        .listRowBackground(Color.clear)
                 }
-                .onDelete { indexSet in
-                    indexSet.forEach { index in
-                        viewModel.removePrediction(at: index)
-                    }
-                }
+                .onDelete(perform: deletePrediction)
             }
         }
         .listStyle(.plain)
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("Predictions")
+        .onAppear {
+            print("PredictionsListView appeared")
+            Task {
+                await viewModel.fetchData()
+            }
+        }
+        .onDisappear {
+            print("PredictionsListView disappeared")
+        }
+        .onChange(of: viewModel.predictions) { newPredictions in
+            print("Predictions updated: \(newPredictions.count) items")
+        }
+        .refreshable {
+            print("Manual refresh triggered")
+            await viewModel.fetchData()
+        }
+    }
+    
+    private func deletePrediction(at offsets: IndexSet) {
+        for index in offsets {
+            viewModel.removePrediction(at: index)
+        }
     }
 }
 
@@ -43,139 +64,142 @@ struct PredictionRowView: View {
     let prediction: Prediction
     @ObservedObject var viewModel: CryptoViewModel
     
-    var currentPrice: Double? {
-        viewModel.getCrypto(by: prediction.cryptoId)?.currentPrice
+    private var currentPrice: Double? {
+        viewModel.cryptocurrencies.first(where: { $0.id == prediction.cryptoId })?.currentPrice
     }
     
-    var profitLossPercentage: Double? {
-        guard let current = currentPrice else { return nil }
-        return ((current - prediction.initialPrice) / prediction.initialPrice) * 100
+    private var currentPriceFormatted: String {
+        if let price = currentPrice {
+            return String(format: "$%.2f", price)
+        }
+        return "Loading..."
     }
     
-    var profitLossAmount: Double? {
-        guard let current = currentPrice else { return nil }
-        return current - prediction.initialPrice
+    private var currentPercentageChange: String {
+        guard let current = currentPrice else { return "" }
+        let change = ((current - prediction.startPrice) / prediction.startPrice) * 100
+        return String(format: "%+.1f%%", change)
     }
     
-    var isProfitable: Bool? {
-        guard let amount = profitLossAmount else { return nil }
-        return amount > 0
+    private var targetPercentageChange: String {
+        let change = ((prediction.predictedPrice - prediction.startPrice) / prediction.startPrice) * 100
+        return String(format: "%+.1f%%", change)
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header: Coin Info and Duration
+            // Header
             HStack {
-                Text(prediction.cryptoName)
-                    .font(.headline)
-                Text(prediction.cryptoSymbol.uppercased())
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(prediction.direction == .up ? Color.green : Color.red)
+                        .frame(width: 8, height: 8)
+                    Text(prediction.cryptoName)
+                        .font(.headline)
+                }
+                Spacer()
+                Text(prediction.timeRemaining)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Spacer()
-                Text(prediction.type.rawValue)
-                    .font(.subheadline)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
             }
             
-            // Price Information
-            HStack {
-                // Initial Price
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Initial")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(String(format: "$%.2f", prediction.initialPrice))
-                        .font(.subheadline)
-                }
-                
-                Spacer()
-                
-                // Target Price
-                VStack(alignment: .center, spacing: 4) {
-                    Text("Target")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(String(format: "$%.2f", prediction.predictedPrice))
-                        .font(.subheadline)
-                }
-                
-                Spacer()
-                
-                // Current Price
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Current")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    if let current = currentPrice {
-                        Text(String(format: "$%.2f", current))
-                            .font(.subheadline)
-                    } else {
-                        Text("--")
+            // Prices with equal spacing
+            GeometryReader { geometry in
+                HStack(alignment: .top, spacing: 0) {
+                    // Start Price
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Start")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(String(format: "$%.2f", prediction.startPrice))
                             .font(.subheadline)
                     }
+                    .frame(width: geometry.size.width / 3, alignment: .topLeading)
+                    
+                    // Current Price
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Current")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(currentPriceFormatted)
+                            .font(.subheadline)
+                        if !currentPercentageChange.isEmpty {
+                            Text(currentPercentageChange)
+                                .font(.caption)
+                                .foregroundColor(currentPrice ?? 0 >= prediction.startPrice ? .green : .red)
+                        }
+                    }
+                    .frame(width: geometry.size.width / 3, alignment: .topLeading)
+                    
+                    // Target Price
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Target")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(String(format: "$%.2f", prediction.predictedPrice))
+                            .font(.subheadline)
+                        Text(targetPercentageChange)
+                            .font(.caption)
+                            .foregroundColor(prediction.predictedPrice >= prediction.startPrice ? .green : .red)
+                    }
+                    .frame(width: geometry.size.width / 3, alignment: .topLeading)
                 }
             }
+            .frame(height: 65)
             
-            // Profit/Loss Information
-            if let percentage = profitLossPercentage, let amount = profitLossAmount {
+            // Outcome with improved alignment
+            if let outcome = prediction.outcome {
                 HStack {
-                    // Profit/Loss Label with Icon
-                    HStack(spacing: 4) {
-                        Image(systemName: isProfitable ?? false ? "arrow.up.right" : "arrow.down.right")
-                        Text(isProfitable ?? false ? "Profit" : "Loss")
+                    HStack(spacing: 6) {
+                        switch outcome {
+                        case .correct:
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Prediction Correct")
+                                .foregroundColor(.green)
+                        case .incorrect:
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.red)
+                            Text("Prediction Incorrect")
+                                .foregroundColor(.red)
+                        case .pending:
+                            Image(systemName: "clock.fill")
+                                .foregroundColor(.orange)
+                            Text("Prediction Pending")
+                                .foregroundColor(.orange)
+                        }
                     }
-                    .font(.caption.bold())
-                    .foregroundColor(isProfitable ?? false ? .green : .red)
-                    
+                    .font(.subheadline)
                     Spacer()
-                    
-                    // Amount and Percentage
-                    HStack(spacing: 8) {
-                        Text(String(format: "$%.2f", abs(amount)))
-                        Text("(\(String(format: "%.1f%%", abs(percentage))))")
-                    }
-                    .font(.caption.bold())
-                    .foregroundColor(isProfitable ?? false ? .green : .red)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    (isProfitable ?? false ? Color.green : Color.red)
-                        .opacity(0.1)
-                )
-                .cornerRadius(8)
-            }
-            
-            // Status and Date
-            HStack {
-                Text("Made on \(prediction.timestamp.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-                Text(prediction.outcome?.rawValue ?? "Pending")
-                    .font(.caption.bold())
-                    .foregroundColor(predictionColor)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
     }
+}
+
+struct PriceColumn: View {
+    let title: String
+    let price: String
+    var percentageChange: String? = nil
+    var changeColor: Color = .primary
     
-    private var predictionColor: Color {
-        guard let outcome = prediction.outcome else {
-            return .orange
-        }
-        switch outcome {
-        case .correct:
-            return .green
-        case .incorrect:
-            return .red
-        case .expired:
-            return .gray
-        case .pending:
-            return .orange
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Text(price)
+                .font(.subheadline)
+            if let change = percentageChange {
+                Text(change)
+                    .font(.caption)
+                    .foregroundColor(changeColor)
+            }
         }
     }
 }

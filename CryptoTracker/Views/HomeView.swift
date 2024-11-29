@@ -5,87 +5,81 @@ struct HomeView: View {
     @State private var selectedCategory: CryptoCategory = .all
     @State private var searchText = ""
     
-    var filteredCryptos: [Cryptocurrency] {
-        var cryptos = viewModel.cryptocurrencies
-        
-        // Apply category filter
-        switch selectedCategory {
-        case .all:
-            break
-        case .favorites:
-            cryptos = viewModel.getFavorites()
-        case .gainers:
-            cryptos = cryptos.filter { $0.priceChangePercentage24H > 0 }
-                .sorted { $0.priceChangePercentage24H > $1.priceChangePercentage24H }
-        case .losers:
-            cryptos = cryptos.filter { $0.priceChangePercentage24H < 0 }
-                .sorted { $0.priceChangePercentage24H < $1.priceChangePercentage24H }
-        case .marketCap:
-            cryptos = cryptos.sorted { $0.marketCap > $1.marketCap }
-        }
-        
-        // Apply search filter
-        if !searchText.isEmpty {
-            cryptos = cryptos.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.symbol.localizedCaseInsensitiveContains(searchText)
+    private var filteredCryptos: [Cryptocurrency] {
+        let categoryFiltered: [Cryptocurrency] = {
+            switch selectedCategory {
+            case .all:
+                return viewModel.cryptocurrencies
+            case .favorites:
+                return viewModel.favoriteCryptos
+            case .gainers:
+                return viewModel.cryptocurrencies.sorted { ($1.priceChangePercentage24H ?? 0) < ($0.priceChangePercentage24H ?? 0) }
+            case .losers:
+                return viewModel.cryptocurrencies.sorted { ($0.priceChangePercentage24H ?? 0) < ($1.priceChangePercentage24H ?? 0) }
             }
+        }()
+        
+        if searchText.isEmpty {
+            return categoryFiltered
         }
         
-        return cryptos
+        return categoryFiltered.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText) ||
+            $0.symbol.localizedCaseInsensitiveContains(searchText)
+        }
     }
     
     var body: some View {
-        List {
-            Section {
-                // Search Bar
-                TextField("Search cryptocurrencies...", text: $searchText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                
-                // Category Filters
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(CryptoCategory.allCases, id: \.self) { category in
-                            CategoryButton(
-                                category: category,
-                                isSelected: selectedCategory == category
-                            ) {
+        VStack(spacing: 0) {
+            // Categories ScrollView
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(CryptoCategory.allCases, id: \.self) { category in
+                        CategoryButton(
+                            category: category,
+                            isSelected: selectedCategory == category
+                        ) {
+                            withAnimation {
                                 selectedCategory = category
                             }
                         }
                     }
-                    .padding(.horizontal)
                 }
-                .padding(.vertical, 4)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
+            .background(Color(.systemBackground))
             
-            if viewModel.isLoading && viewModel.cryptocurrencies.isEmpty {
-                HStack {
-                    Spacer()
-                    ProgressView("Loading cryptocurrencies...")
-                    Spacer()
-                }
-                .listRowBackground(Color.clear)
-            } else if let error = viewModel.error {
-                ErrorView(error: error) {
-                    Task {
-                        try await viewModel.fetchData()
+            List {
+                if viewModel.isLoading && viewModel.cryptocurrencies.isEmpty {
+                    HStack {
+                        Spacer()
+                        ProgressView("Loading cryptocurrencies...")
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                } else if let error = viewModel.error {
+                    ErrorView(error: error.localizedDescription) {
+                        Task {
+                            await viewModel.fetchData()
+                        }
+                    }
+                    .listRowBackground(Color.clear)
+                } else {
+                    ForEach(filteredCryptos) { crypto in
+                        CryptoRowView(cryptocurrency: crypto, viewModel: viewModel)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
                 }
-                .listRowBackground(Color.clear)
-            } else {
-                // Cryptocurrencies
-                ForEach(filteredCryptos) { crypto in
-                    CryptoRowView(cryptocurrency: crypto, viewModel: viewModel)
-                }
+            }
+            .listStyle(.plain)
+            .refreshable {
+                await viewModel.fetchData()
             }
         }
-        .listStyle(.plain)
-        .navigationTitle("Crypto Tracker")
-        .task {
-            if viewModel.cryptocurrencies.isEmpty {
-                try? await viewModel.fetchData()
-            }
-        }
+        .searchable(text: $searchText, prompt: "Search cryptocurrencies")
+        .navigationTitle("CryptoTracker")
     }
 }
