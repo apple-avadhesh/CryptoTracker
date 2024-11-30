@@ -1,19 +1,28 @@
 import Foundation
 
-struct Cryptocurrency: Identifiable, Codable {
+struct Cryptocurrency: Identifiable, Codable, Hashable {
     let id: String
     let symbol: String
     let name: String
     let image: String
-    let currentPrice: Double?
+    var description: String?
+    var currentPrice: Double?
     let marketCap: Double?
     let marketCapRank: Int?
     let totalVolume: Double?
     let high24H: Double?
     let low24H: Double?
     let priceChange24H: Double?
-    let priceChangePercentage24H: Double?
+    var priceChangePercentage24H: Double?
     let lastUpdated: String?
+    
+    static func == (lhs: Cryptocurrency, rhs: Cryptocurrency) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
     
     var formattedCurrentPrice: String {
         if let price = currentPrice {
@@ -38,6 +47,7 @@ struct Cryptocurrency: Identifiable, Codable {
         case symbol
         case name
         case image
+        case description
         case currentPrice = "current_price"
         case marketCap = "market_cap"
         case marketCapRank = "market_cap_rank"
@@ -52,32 +62,21 @@ struct Cryptocurrency: Identifiable, Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Required fields
         id = try container.decode(String.self, forKey: .id)
         symbol = try container.decode(String.self, forKey: .symbol)
         name = try container.decode(String.self, forKey: .name)
         image = try container.decode(String.self, forKey: .image)
-        
-        // Optional fields with careful decoding
-        if let priceString = try? container.decode(String.self, forKey: .currentPrice) {
-            currentPrice = Double(priceString)
-        } else {
-            currentPrice = try? container.decode(Double.self, forKey: .currentPrice)
-        }
-        
+        currentPrice = try? container.decode(Double.self, forKey: .currentPrice)
         marketCap = try? container.decode(Double.self, forKey: .marketCap)
         marketCapRank = try? container.decode(Int.self, forKey: .marketCapRank)
         totalVolume = try? container.decode(Double.self, forKey: .totalVolume)
         high24H = try? container.decode(Double.self, forKey: .high24H)
         low24H = try? container.decode(Double.self, forKey: .low24H)
         priceChange24H = try? container.decode(Double.self, forKey: .priceChange24H)
-        
-        if let changeString = try? container.decode(String.self, forKey: .priceChangePercentage24H) {
-            priceChangePercentage24H = Double(changeString)
-        } else {
-            priceChangePercentage24H = try? container.decode(Double.self, forKey: .priceChangePercentage24H)
-        }
-        
+        priceChangePercentage24H = try? container.decode(Double.self, forKey: .priceChangePercentage24H)
         lastUpdated = try? container.decode(String.self, forKey: .lastUpdated)
+        
+        // Optional description, initialized as nil
+        description = nil
     }
 }

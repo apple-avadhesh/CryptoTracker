@@ -8,6 +8,35 @@ class CryptoViewModel: ObservableObject {
     @Published var predictions: [Prediction] = []
     @Published var error: Error?
     @Published var isLoading = false
+    @Published var currentPage = 1
+    private let pageSize = 250
+    private var isFetching = false
+    
+    // Description-related state management
+    @Published var descriptionLoadingStates: [String: DescriptionLoadState] = [:]
+    
+    enum DescriptionLoadState: Equatable {
+        case notLoaded
+        case loading
+        case loaded(String)
+        case failed(Error)
+        
+        // Implement Equatable
+        static func == (lhs: DescriptionLoadState, rhs: DescriptionLoadState) -> Bool {
+            switch (lhs, rhs) {
+            case (.notLoaded, .notLoaded):
+                return true
+            case (.loading, .loading):
+                return true
+            case (.loaded(let lhsDesc), .loaded(let rhsDesc)):
+                return lhsDesc == rhsDesc
+            case (.failed(let lhsError), .failed(let rhsError)):
+                return lhsError.localizedDescription == rhsError.localizedDescription
+            default:
+                return false
+            }
+        }
+    }
     
     var favoriteCryptos: [Cryptocurrency] {
         cryptocurrencies.filter { favoriteIds.contains($0.id) }
@@ -18,15 +47,27 @@ class CryptoViewModel: ObservableObject {
         loadPredictions()
         Task {
             await fetchData()
+            startPeriodicUpdates()
+        }
+    }
+    
+    private func startPeriodicUpdates() {
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task {
+                await self?.fetchData()
+            }
         }
     }
     
     func fetchData() async {
-        isLoading = true
+        guard !isFetching else { return }
+        isFetching = true
+        isLoading = cryptocurrencies.isEmpty
         error = nil
         
         do {
-            let url = URL(string: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&sparkline=false&price_change_percentage=24h")!
+            let url = URL(string: "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h")!
+            
             let (data, response) = try await URLSession.shared.data(from: url)
             
             guard let httpResponse = response as? HTTPURLResponse else {
@@ -34,65 +75,91 @@ class CryptoViewModel: ObservableObject {
             }
             
             if httpResponse.statusCode == 429 {
-                throw URLError(.init(rawValue: 429))
+                throw NSError(domain: "CryptoTracker", code: 429, userInfo: [
+                    NSLocalizedDescriptionKey: "Rate limit reached. Please try again in a minute."
+                ])
             }
             
             guard httpResponse.statusCode == 200 else {
                 throw URLError(.badServerResponse)
             }
             
-            // Print the raw JSON response for debugging
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("API Response: \(jsonString.prefix(1000))") // Print first 1000 chars to see structure
-            }
-            
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .useDefaultKeys // Changed to use default keys
-            
-            do {
-                let cryptos = try decoder.decode([Cryptocurrency].self, from: data)
-                print("Decoded \(cryptos.count) cryptocurrencies")
-                if let first = cryptos.first {
-                    print("First crypto details:")
-                    print("- ID: \(first.id)")
-                    print("- Name: \(first.name)")
-                    print("- Symbol: \(first.symbol)")
-                    print("- Current Price: \(String(describing: first.currentPrice))")
-                    print("- Market Cap Rank: \(String(describing: first.marketCapRank))")
-                    print("- Price Change 24h: \(String(describing: first.priceChangePercentage24H))")
-                }
-                self.cryptocurrencies = cryptos
-            } catch {
-                print("Decoding error: \(error)")
-                if let decodingError = error as? DecodingError {
-                    switch decodingError {
-                    case .keyNotFound(let key, let context):
-                        print("Key '\(key.stringValue)' not found at path: \(context.codingPath.map { $0.stringValue })")
-                    case .typeMismatch(let type, let context):
-                        print("Type mismatch: expected \(type) at path: \(context.codingPath.map { $0.stringValue })")
-                    case .valueNotFound(let type, let context):
-                        print("Value of type \(type) not found at path: \(context.codingPath.map { $0.stringValue })")
-                    case .dataCorrupted(let context):
-                        print("Data corrupted: \(context)")
-                    @unknown default:
-                        print("Unknown decoding error: \(error)")
-                    }
-                }
-                throw error
-            }
+            self.cryptocurrencies = try decoder.decode([Cryptocurrency].self, from: data)
             
             updatePredictionOutcomes()
-        } catch let error as URLError where error.code.rawValue == 429 {
-            self.error = NSError(domain: "CryptoTracker", code: 429, userInfo: [
-                NSLocalizedDescriptionKey: "Rate limit exceeded. Please try again later."
-            ])
         } catch {
             self.error = error
-            print("Error fetching data: \(error.localizedDescription)")
         }
         
+        isFetching = false
         isLoading = false
     }
+    
+    func fetchCryptoDescription(for id: String) async {
+        // Check if description is already loaded or currently loading
+        guard descriptionLoadingStates[id] == nil || descriptionLoadingStates[id] == .notLoaded else { 
+            return 
+        }
+        
+        // Set loading state
+        descriptionLoadingStates[id] = .loading
+        
+        do {
+            let urlString = "https://api.coingecko.com/api/v3/coins/\(id)?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false"
+            
+            guard let url = URL(string: urlString) else {
+                throw URLError(.badURL)
+            }
+            
+            let (detailData, detailResponse) = try await URLSession.shared.data(from: url)
+            
+            guard let detailHttpResponse = detailResponse as? HTTPURLResponse else {
+                throw URLError(.badServerResponse)
+            }
+            
+            print("Description Fetch URL: \(urlString)")
+            print("Description Fetch Status Code: \(detailHttpResponse.statusCode)")
+            
+            guard detailHttpResponse.statusCode == 200 else {
+                throw URLError(.badServerResponse)
+            }
+            
+            struct CoinDetail: Codable {
+                struct Description: Codable {
+                    let en: String?
+                }
+                let description: Description
+            }
+            
+            let coinDetail = try JSONDecoder().decode(CoinDetail.self, from: detailData)
+            
+            // Safely unwrap description, use default if nil
+            let description = coinDetail.description.en ?? "No description available for this cryptocurrency."
+            
+            // Update description loading state
+            descriptionLoadingStates[id] = .loaded(description)
+            
+            // Update cryptocurrency description
+            if let index = cryptocurrencies.firstIndex(where: { $0.id == id }) {
+                cryptocurrencies[index].description = description
+                print("✅ Updated description for \(id): \(description.prefix(50))...")
+            }
+            
+        } catch {
+            print("❌ Error fetching description for \(id): \(error)")
+            
+            // Update description loading state with error
+            descriptionLoadingStates[id] = .failed(error)
+        }
+    }
+    
+    // Helper method to get description state
+    func descriptionState(for cryptoId: String) -> DescriptionLoadState {
+        return descriptionLoadingStates[cryptoId] ?? .notLoaded
+    }
+    
+    // MARK: - Favorites Management
     
     func toggleFavorite(for id: String) {
         if favoriteIds.contains(id) {
@@ -100,11 +167,19 @@ class CryptoViewModel: ObservableObject {
         } else {
             favoriteIds.insert(id)
         }
-        UserDefaults.standard.set(Array(favoriteIds), forKey: "FavoriteIds")
+        saveFavorites()
     }
     
     func isFavorite(_ id: String) -> Bool {
         favoriteIds.contains(id)
+    }
+    
+    private func saveFavorites() {
+        UserDefaults.standard.set(Array(favoriteIds), forKey: "FavoriteIds")
+    }
+    
+    private func loadFavorites() {
+        favoriteIds = Set(UserDefaults.standard.stringArray(forKey: "FavoriteIds") ?? [])
     }
     
     func addPrediction(_ prediction: Prediction) {
@@ -112,9 +187,6 @@ class CryptoViewModel: ObservableObject {
         predictions.append(prediction)
         objectWillChange.send()  // Explicitly notify observers
         savePredictions()
-        Task {
-            await fetchData()  // Refresh data after adding prediction
-        }
     }
     
     func removePrediction(_ prediction: Prediction) {
@@ -129,10 +201,6 @@ class CryptoViewModel: ObservableObject {
     
     func getCrypto(by id: String) -> Cryptocurrency? {
         cryptocurrencies.first { $0.id == id }
-    }
-    
-    private func loadFavorites() {
-        favoriteIds = Set(UserDefaults.standard.stringArray(forKey: "FavoriteIds") ?? [])
     }
     
     private func loadPredictions() {
